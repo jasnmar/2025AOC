@@ -102,7 +102,6 @@ function analyzeRange(range: string) {
   const [start, end] = range.split("-").map((id) => {
     return parseInt(id)
   })
-  // console.log("start/end", start, end);
   if (start && end) {
     const length = getRange(start, end)
     if (length > 0) {
@@ -118,17 +117,16 @@ function analyzeRange(range: string) {
 
 function main() {
   const numbers = input.split(",")
-  // console.log("numbers: ", numbers)
   numbers.forEach((number) => {
     if (number.includes("-")) {
       analyzeRange(number)
     }
   })
-  // console.log("results: ", results)
+
   const sum = results.reduce((acc, cur) => {
     const num = cur.number
     return acc + num
-  }, 0) // Initialize acc with 0 to ensure it's a number
+  }, 0) 
   console.log("sum: ", sum)
 }
 main()
