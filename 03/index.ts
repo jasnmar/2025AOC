@@ -1,6 +1,6 @@
 import * as fs from "fs"
 
-const FILENAME = "./03/sample.txt"
+const FILENAME = "./03/data.txt"
 
 function convertBatteryStringToNumberArray(batteryString: string): number[] {
   const batteryDigits = batteryString.split("")
@@ -16,16 +16,67 @@ function findLargestNumberInArray(valueArray: number[]): number {
   return largest
 }
 
+function convertArrayOfNumbersToNumber(numArray:number[]) : number {
+  const result: number = parseInt(numArray.join(''))
 
+  return result
+}
 
+function fillArrayValues(arr: number[]) {
+  const retArr: number[] = []
+  arr.forEach((item) => {
+    retArr.push(item)
+  })
+  return retArr
+}
 
+function findLargest12Numbers(numArray: number[]): number[] {
+  let counter = 11
+  if (numArray.length < counter) return []
+  //We haven't found any numbers yet, so we need to reserve the last 12 numbers in case
+  //that's where the values are that we need, so chop off the fron of the array, preserving
+  //the last 12 numbers.
+  const resultsArray: number[] = []
+  let arrayStart = 0
+  let arrayFront: number[] = numArray
+  let trackingArray: number[] = numArray
+  while (counter > -1) {
+    if (resultsArray.length > 0) {
+      //This gets the last value found
+      const maxVal = resultsArray[resultsArray.length - 1]
+      arrayStart = trackingArray.findIndex((value) => value === maxVal)+1
+      trackingArray = trackingArray.slice(arrayStart)
+    }
+    arrayFront = trackingArray.slice(0, trackingArray.length - counter )
+    resultsArray.push(findLargestNumberInArray(arrayFront))
+    counter--
+  }
+  return resultsArray
+}
 
-function one() {
-  // console.log("running")
-
+function main() {
   const fileContents: string = fs.readFileSync(FILENAME, "utf8")
   if (fileContents.length > 0) {
-    // console.log(fileContents)
+    const batteriesArray = fileContents.split(/\r?\n/)
+    // console.log("batteriesArray: ", batteriesArray);
+    const batteryNumbers = batteriesArray.map((battery) => {
+      return convertBatteryStringToNumberArray(battery)
+    })
+    const largestArray = batteryNumbers.map((battery) => {
+      return findLargest12Numbers(battery)
+    })
+    const battValArray = largestArray.map((batArr) => {
+      return convertArrayOfNumbersToNumber(batArr)
+    })
+    console.log("battValArray: ", JSON.stringify(battValArray))
+    const total = battValArray.reduce((tot, val) => tot + val)
+    console.log("total: ", total);
+  }
+}
+
+function one() {
+  const fileContents: string = fs.readFileSync(FILENAME, "utf8")
+  if (fileContents.length > 0) {
     //Let's make an array out of each line, which represents a single battery
     const batteriesArray = fileContents.split(/\r?\n/)
     const batterySelection = batteriesArray.map((battery) => {
@@ -68,8 +119,11 @@ function one() {
       }
     })
     console.log("batteryArray: ", batteryArray)
-    const total = batteryArray.reduce((acc: number, num: number | undefined) => acc + (num || 0), 0)
-    console.log("total: ", total);
+    const total = batteryArray.reduce(
+      (acc: number, num: number | undefined) => acc + (num || 0),
+      0
+    )
+    console.log("total: ", total)
   }
 }
 
