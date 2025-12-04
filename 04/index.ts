@@ -2,6 +2,7 @@ import * as fs from "fs"
 
 const FILENAME = "./04/data.txt"
 let paperStorageArray: number[][] = []
+let removalMap: number[][] = []
 
 function convertRowStringToDataArray(str: string): number[] {
   const retArr: number[] = []
@@ -53,32 +54,63 @@ function checkPosition(x: number, y: number): number {
       }
     })
   })
-  // console.log("total", total)
+  if (total < 4) {
+    removalMap.push([x, y])
+  }
   return total
 }
 
+function calcuateRemoval() {
+  let total = 0
+  for (let i = 0; i < paperStorageArray.length; i++) {
+    for (let j = 0; j < (paperStorageArray[i] || []).length; j++) {
+      if (paperStorageArray[i]?.[j] !== undefined) {
+        if (paperStorageArray[i]?.[j] === 1) {
+          if (checkPosition(j, i) < 4) {
+            total++
+          }
+        }
+      }
+    }
+  }
+  return total
+}
+
+function removeRolls() {
+  if (removalMap.length > 0) {
+    removalMap.forEach((roll) => {
+      if (roll[0] != undefined && roll[1] != undefined) {
+        const x: number = roll[0]
+        const y: number = roll[1]
+        if (roll[0] != undefined && roll[1] != undefined) {
+        }
+        if (paperStorageArray[y] && paperStorageArray[y][x] != undefined) {
+          paperStorageArray[y][x] = 0
+        }
+      }
+    })
+  }
+  removalMap = []
+}
+
 function main() {
-  // console.log("running")
   let goodCount = 0
   const fileContents: string = fs.readFileSync(FILENAME, "utf8")
   if (fileContents.length > 0) {
     const paperStorage = fileContents.split(/\r?\n/)
-    // console.log("paperStorage: ", paperStorage)
 
     paperStorageArray = paperStorage.map((row) =>
       convertRowStringToDataArray(row)
     )
-    for (let i = 0; i < paperStorageArray.length; i++) {
-      for (let j = 0; j < (paperStorageArray[i] || []).length; j++)
-        if (paperStorageArray[i]?.[j] !== undefined) {
-          if (paperStorageArray[i]?.[j] === 1) {
-            if (checkPosition(j, i) < 4) goodCount++
-          }
-        }
+    goodCount = calcuateRemoval()
+    let curCount = goodCount
+    while (curCount > 0) {
+      removeRolls()
+      curCount = calcuateRemoval()
+      goodCount += curCount
     }
   }
   console.log("goodCount: ", goodCount)
 }
 
 main()
-// console.log("checkPosition(0,2): ", checkPosition(2,0));

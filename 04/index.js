@@ -1,6 +1,7 @@
 import * as fs from "fs";
 const FILENAME = "./04/data.txt";
 let paperStorageArray = [];
+let removalMap = [];
 function convertRowStringToDataArray(str) {
     const retArr = [];
     if (str.length > 0) {
@@ -48,8 +49,41 @@ function checkPosition(x, y) {
             }
         });
     });
-    // console.log("total", total)
+    if (total < 4) {
+        removalMap.push([x, y]);
+    }
     return total;
+}
+function calcuateRemoval() {
+    let total = 0;
+    for (let i = 0; i < paperStorageArray.length; i++) {
+        for (let j = 0; j < (paperStorageArray[i] || []).length; j++) {
+            if (paperStorageArray[i]?.[j] !== undefined) {
+                if (paperStorageArray[i]?.[j] === 1) {
+                    if (checkPosition(j, i) < 4) {
+                        total++;
+                    }
+                }
+            }
+        }
+    }
+    return total;
+}
+function removeRolls() {
+    if (removalMap.length > 0) {
+        removalMap.forEach((roll) => {
+            if (roll[0] != undefined && roll[1] != undefined) {
+                const x = roll[0];
+                const y = roll[1];
+                if (roll[0] != undefined && roll[1] != undefined) {
+                }
+                if (paperStorageArray[y] && paperStorageArray[y][x] != undefined) {
+                    paperStorageArray[y][x] = 0;
+                }
+            }
+        });
+    }
+    removalMap = [];
 }
 function main() {
     // console.log("running")
@@ -59,18 +93,15 @@ function main() {
         const paperStorage = fileContents.split(/\r?\n/);
         // console.log("paperStorage: ", paperStorage)
         paperStorageArray = paperStorage.map((row) => convertRowStringToDataArray(row));
-        for (let i = 0; i < paperStorageArray.length; i++) {
-            for (let j = 0; j < (paperStorageArray[i] || []).length; j++)
-                if (paperStorageArray[i]?.[j] !== undefined) {
-                    if (paperStorageArray[i]?.[j] === 1) {
-                        if (checkPosition(j, i) < 4)
-                            goodCount++;
-                    }
-                }
+        goodCount = calcuateRemoval();
+        let curCount = goodCount;
+        while (curCount > 0) {
+            removeRolls();
+            curCount = calcuateRemoval();
+            goodCount += curCount;
         }
     }
     console.log("goodCount: ", goodCount);
 }
 main();
-// console.log("checkPosition(0,2): ", checkPosition(2,0));
 //# sourceMappingURL=index.js.map
