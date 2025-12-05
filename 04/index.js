@@ -86,12 +86,10 @@ function removeRolls() {
     removalMap = [];
 }
 function main() {
-    // console.log("running")
     let goodCount = 0;
     const fileContents = fs.readFileSync(FILENAME, "utf8");
     if (fileContents.length > 0) {
         const paperStorage = fileContents.split(/\r?\n/);
-        // console.log("paperStorage: ", paperStorage)
         paperStorageArray = paperStorage.map((row) => convertRowStringToDataArray(row));
         goodCount = calcuateRemoval();
         let curCount = goodCount;
