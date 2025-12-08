@@ -34,18 +34,24 @@ function getColumnsValues(arr: string[][]): number[] {
     // Check if tmpArray is not a number
     console.log("tmpArray: ", JSON.stringify(tmpArray))
     tmpArray.forEach((list) => {
-      
       const operator = list.pop()
-      console.log("list: ", list);
-      if(typeof operator === 'string') {
+      console.log("list: ", list)
+      if (typeof operator === "string") {
         if (operator === "+") {
-          result.push(list.reduce((acc: number, num: string | number) => acc + (typeof num === 'string' ? parseInt(num) : num), 0));
+          result.push(
+            list.reduce(
+              (acc: number, num: string | number) =>
+                acc + (typeof num === "string" ? parseInt(num) : num),
+              0
+            )
+          )
         } else if (operator === "*") {
-          result.push(list.reduce((acc: number, num: string | number) => {
-            return acc * (typeof num === 'string' ? parseInt(num) : num);
-          }, 1));
+          result.push(
+            list.reduce((acc: number, num: string | number) => {
+              return acc * (typeof num === "string" ? parseInt(num) : num)
+            }, 1)
+          )
         }
-
       }
     })
   }
@@ -53,7 +59,7 @@ function getColumnsValues(arr: string[][]): number[] {
   return result
 }
 
-function main() {
+function one() {
   console.log("running")
   const fileContents: string = fs.readFileSync(FILENAME, "utf8")
   if (fileContents.length > 0) {
@@ -65,11 +71,110 @@ function main() {
       })
       console.log("columns: ", JSON.stringify(columns))
       const colVals = getColumnsValues(columns)
-      console.log("colVals: ", colVals);
+      console.log("colVals: ", colVals)
       const total = colVals.reduce((acc, num) => acc + num)
-      console.log("total: ", total);
+      console.log("total: ", total)
     }
   }
 }
 
+function parseProblems(arr: string[][]): string[][] {
+  // The array is currently in rows, this transposes it to be in columns.
+  const nArr: string[][] = []
+  arr.forEach((row, i) => {
+    row.forEach((cell, j) => {
+      // Ensure the sub-array for the column exists.
+      if (!nArr[j]) {
+        nArr[j] = []
+      }
+      // Assign the cell to the new transposed position.
+      nArr[j][i] = cell
+    })
+  })
+  return nArr
+}
+
+function separateProblems(arr: string[][]) {
+  const retArr: string[][] = []
+  arr.forEach((row: string[]) => {
+    if (row.every((item) => item === " ")) {
+      retArr.push([]) // Push an empty array to signify a separator
+    } else {
+      retArr.push(row) // Push the row as is
+    }
+  })
+  return retArr
+}
+
+function parseString(stringToParse: string[]): number {
+  const tmpArr: string[] = []
+  stringToParse.forEach((char: string) => {
+    if (char !== " ") tmpArr.push(char)
+  })
+  const fString = tmpArr.join("")
+  return parseInt(fString)
+}
+
+function finalSolution(arr: (string | number)[][]) {
+  const arrayValues = arr.map((problem) => {
+    const operator = problem.shift()
+    if (operator === "*") {
+      return problem.reduce((acc: number, num: string | number) => {
+        return acc * (typeof num === "string" ? parseInt(num) : num)
+      }, 1)
+    } else {
+      return problem.reduce((acc: number, num: string | number) => {
+        return acc + (typeof num === "string" ? parseInt(num) : num)
+      }, 0)
+    }
+  })
+  return arrayValues
+}
+
+function boilProblems(arr: string[][]) {
+  const retArr: (string | number)[][] = []
+  let subArr: (string | number)[] = []
+  const lastEntry = arr[arr.length - 1]
+  arr.forEach((element) => {
+    const lastChar = element[element.length - 1]
+    if (lastChar === "*" || lastChar === "+") {
+      subArr.push(lastChar)
+      element.pop()
+    }
+    const strValue = parseString(element)
+    if (Number.isNaN(strValue)) {
+      retArr.push(subArr)
+      subArr = []
+    } else if (element === lastEntry) {
+      subArr.push(strValue)
+      retArr.push(subArr)
+    } else {
+      subArr.push(strValue)
+    }
+  })
+  return retArr
+}
+
+function main() {
+  console.log("running")
+  const fileContents: string = fs.readFileSync(FILENAME, "utf8")
+  if (fileContents.length > 0) {
+    const problemList = fileContents.split(/\r?\n/)
+    console.log("problemList: ", problemList)
+    const charMap = problemList.map((line) => {
+      return line.split("")
+    })
+    console.log("charMap: ", JSON.stringify(charMap))
+    const problems = parseProblems(charMap)
+    console.log("problems: ", JSON.stringify(problems))
+    const separatedProblems = separateProblems(problems)
+    console.log("separatedProblems: ", JSON.stringify(separatedProblems))
+    const boiledProblems = boilProblems(separatedProblems)
+    console.log("boiledProblems: ", JSON.stringify(boiledProblems))
+    const totArr = finalSolution(boiledProblems)
+    console.log("totArr: ", JSON.stringify(totArr))
+    const total = totArr.reduce((acc, num) => acc + num)
+    console.log("total: ", total)
+  }
+}
 main()
