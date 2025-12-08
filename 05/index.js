@@ -1,4 +1,3 @@
-import { create } from "domain";
 import * as fs from "fs";
 const FILENAME = "./05/data.txt";
 let freshDB = [];
@@ -10,74 +9,146 @@ function createFreshDBFromStrings(str) {
                 const startNumber = parseInt(rangeString[0]) || 0;
                 const endNumber = parseInt(rangeString[1]) || 0;
                 if (endNumber < startNumber) {
-                    return [endNumber, startNumber];
+                    return [endNumber, startNumber, 0];
                 }
                 else {
-                    return [startNumber, endNumber];
+                    return [startNumber, endNumber, 0];
                 }
             }
             else
-                return [0, 0];
+                return [0, 0, 0];
         });
     }
     freshDB = freshDB.sort((a, b) => {
-        const valA = a[0] !== undefined ? a[0] : 0;
-        const valB = b[0] !== undefined ? b[0] : 0;
-        return valA - valB;
+        const fValA = a[0];
+        const fValB = b[0];
+        const sValA = a[1];
+        const sValB = b[1];
+        if (fValA - fValB === 0) {
+            return sValA - sValB;
+        }
+        else {
+            return fValA - fValB;
+        }
     });
 }
 function searchDB(ingredient) {
     let found = 0;
     if (ingredient) {
-        if (freshDB.length > 0) {
-            if (freshDB[0] !== undefined) {
-                if (freshDB[0][0] !== undefined) {
-                    if (ingredient < freshDB[0][0]) {
-                        return found;
-                    }
-                }
-            }
-            const arrLength = freshDB.length - 1;
-            if (arrLength) {
-                if (freshDB[arrLength] !== undefined) {
-                    if (freshDB[arrLength][1] !== undefined) {
-                        if (ingredient > freshDB[arrLength][1]) {
-                            return found;
-                        }
-                    }
-                }
-            }
-            let biggerThanStart = freshDB.map((range) => {
-                if (range[0] !== undefined) {
-                    if (ingredient >= range[0]) {
-                        return range;
-                    }
-                    else {
-                        return [0];
-                    }
-                }
-            });
-            biggerThanStart = biggerThanStart.filter((range) => range && range[0] !== 0);
-            console.log("biggerThanStart: ", biggerThanStart);
-            let smallerThanEnd = biggerThanStart.map((range) => {
-                if (range && range[1] !== undefined) {
-                    if (ingredient <= range[1]) {
-                        return range;
-                    }
-                    else {
-                        return [0];
-                    }
-                }
-            });
-            smallerThanEnd = smallerThanEnd.filter((range) => range && range[0] != 0);
-            console.log("smallerThanEnd: ", smallerThanEnd);
-            if (smallerThanEnd.length > 0)
-                found = 1;
+        const firstRange = freshDB[0];
+        if (firstRange && ingredient < firstRange[0]) {
+            return found;
         }
+        if (freshDB.length > 1) {
+            const lastRange = freshDB[freshDB.length - 1];
+            if (lastRange && ingredient > lastRange[1]) {
+                return found;
+            }
+        }
+        const biggerThanStart = freshDB.filter((range) => ingredient >= range[0]);
+        console.log("biggerThanStart: ", biggerThanStart);
+        const smallerThanEnd = biggerThanStart.filter((range) => ingredient <= range[1]);
+        console.log("smallerThanEnd: ", smallerThanEnd);
+        if (smallerThanEnd.length > 0)
+            found = 1;
     }
     return found;
 }
+function collapseOverlaps() {
+    //The DB is sorted by starting value
+    //Find the list of starting values that are less than the current ending value
+    const newDB = [];
+    for (let i = 0; i < freshDB.length; i++) {
+        //Get a list of all of the ranges who start before the current one ends
+        const cRange = freshDB[i];
+        if (cRange) {
+            //Current index start number
+            const cStart = cRange[0];
+            //Current index end number
+            const cEnd = cRange[1];
+            //Current index check data
+            const cCheck = cRange[2];
+            //The new start value is the same as the current start value, until it isn't
+            let nStart = cStart;
+            //The new end value is the same as the current end value, until it isn't
+            let nEnd = cEnd;
+            //The next range in the array
+            if (cCheck === 1) {
+                //This array has already been processed
+                continue;
+            }
+            for (let j = i + 1; j < freshDB.length; j++) {
+                const fRange = freshDB[j];
+                if (fRange) {
+                    //Next index start number
+                    const fStart = fRange[0];
+                    //Next index end number
+                    const fEnd = fRange[1];
+                    //Next Array Check index
+                    const fCheck = fRange[2];
+                    if (fCheck === 1) {
+                        //This array has already been processed
+                        return;
+                    }
+                    if (cStart > fStart) {
+                        //Technically this would indicate a problem as we think we've sorted
+                        //the array, but let's deal with it anyway
+                        nStart = fStart;
+                        fRange[2] = 1;
+                    }
+                    if (fStart <= nEnd) {
+                        //This means that the next array starts
+                        //Before the current one ends, so they overlap
+                        //Set the end to the next end if the next end is bigger
+                        if (fEnd > nEnd) {
+                            nEnd = fEnd;
+                        }
+                        //Mark as processed either way
+                        fRange[2] = 1;
+                    }
+                }
+            }
+            newDB.push([nStart, nEnd, 0]);
+        }
+    }
+    // console.log("newDB: ", newDB)
+    freshDB = newDB;
+}
+function addArrayVals(arr) {
+    const difArray = arr.map((rangeItem) => {
+        if (rangeItem[0] !== undefined && rangeItem[1] !== undefined) {
+            if (rangeItem[0] < rangeItem[1]) {
+                return rangeItem[1] - rangeItem[0] + 1;
+            }
+            else {
+                return rangeItem[0] - rangeItem[1] + 1;
+            }
+        }
+        else {
+            return 0;
+        }
+    });
+    console.log("difArray: ", difArray);
+    const total = difArray.reduce((acc, val) => acc + val);
+    return total;
+}
 function main() {
+    // console.log("running")
+    const fileContents = fs.readFileSync(FILENAME, "utf8");
+    if (fileContents.length > 0) {
+        const fileData = fileContents.split(/\r?\n/);
+        // console.log("fileData: ", fileData)
+        const blankVal = fileData.findIndex((value) => value === "");
+        const freshStringDB = fileData.slice(0, blankVal);
+        createFreshDBFromStrings(freshStringDB);
+        console.log("freshDB: ", JSON.stringify(freshDB));
+        collapseOverlaps();
+        console.log("freshDB: ", JSON.stringify(freshDB));
+        const total = addArrayVals(freshDB);
+        console.log("total: ", total);
+    }
+}
+function one() {
     console.log("running");
     const fileContents = fs.readFileSync(FILENAME, "utf8");
     if (fileContents.length > 0) {
