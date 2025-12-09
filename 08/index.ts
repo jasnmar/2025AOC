@@ -1,7 +1,7 @@
 import * as fs from "fs"
 
-const FILENAME = "./08/sample.txt"
-const CONNECTIONS = 10
+const FILENAME = "./08/data.txt"
+const CONNECTIONS = 10000
 function convertToCoordinates(arr: string[]) {
   let retArr: [number, number, number][] = []
   const intArr = arr.map((coordinateSet) => {
@@ -74,11 +74,14 @@ function mergeCircuits(
   return circuitMap
 }
 
-function connectCircuits(arr: [number, number, number][]) {
+function connectCircuits(
+  arr: [number, number, number][],
+  coordinateCount: number,
+  coordinates: [number, number, number][]
+) {
   if (arr.length === 0) {
     return []
   }
-  let currentConnections = 0
   const circuitMap: [number, number][] = []
   if (arr[0] !== undefined) {
     const firstElem = arr[0][1] as number
@@ -118,7 +121,24 @@ function connectCircuits(arr: [number, number, number][]) {
             ]
           }
         }
+        console.log("circuitMap[0]?.length: ", circuitMap[0]?.length)
 
+        if (circuitMap[0]?.length === coordinateCount) {
+          console.log("val1,val2: ", val1, val2)
+          i = CONNECTIONS
+          console.log("box2", arr[val2])
+          const boxLoc1 = coordinates[val1] ? coordinates[val1] : -1
+          const boxLoc2 = coordinates[val2] ? coordinates[val2] : -1
+          console.log(
+            "coordinates[b1], coordinates[b2]",
+            coordinates[val1],
+            coordinates[val2]
+          )
+          const distance =
+            (boxLoc1 as [number, number, number])[0] *
+            (boxLoc2 as [number, number, number])[0]
+          console.log("distance: ", distance)
+        }
         console.log("circutMap: ", JSON.stringify(circuitMap))
       }
     }
@@ -132,6 +152,7 @@ function main(): void {
     const data = fileContents.split(/\r?\n/)
 
     const coordinates = convertToCoordinates(data)
+    const coordCount = coordinates.length
     console.log("coordinates: ", JSON.stringify(coordinates))
     const distances = makeCoordinateMap(coordinates)
     distances.sort((a, b) => {
@@ -141,7 +162,7 @@ function main(): void {
     })
     console.log("distances: ", JSON.stringify(distances))
 
-    const circuitsMap = connectCircuits(distances)
+    const circuitsMap = connectCircuits(distances, coordCount, coordinates)
     console.log("circuitsMap: ", JSON.stringify(circuitsMap))
     const circuitCounts = circuitsMap.map((circuit) => {
       return circuit.length
